@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      InputMediaURL:
+        description: "Full URL of Master or HD/FHD Stream m3u8 Playlist"
+        required: true
+        default: ""
+      InputMediaName:
+        description: "Input MP4 Media Filename w/ ext"
+        required: true
+        default: "input.mp4"
+      OutputMediaName:
+        description: "Output MP4 Media Filename w/ ext"
+        required: true
+        default: "output.mp4"
+      SpeedProf:
+        description: "SpeedProfile, 0/1/2"
+        required: true
+        default: "2"
+
+env:
+  InputMediaURL: ${{ github.event.inputs.InputMediaURL }}
+  InputMediaName: ${{ github.event.inputs.InputMediaName }}
+  OutputMediaName: ${{ github.event.inputs.OutputMediaName }}
+  SpeedProf: ${{ github.event.inputs.SpeedProf }}
+  RCLONE_CONFIG_URL: ${{ secrets.RCLONE_CONFIG_URL }}
+  RCLONE_INSTALL_MIRROR: ${{ secrets.RCLONE_INSTALL_MIRROR }}
+  FTOOL_ARC_URL: ${{ secrets.FTOOL_ARC_URL }}
+  FTOOL_CONVERTER: ${{ secrets.FTOOL_CONVERTER }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "VP9 R3NCOD3R Job - ${{env.OutputMediaName}}"
+        run: |
+          chmod a+x ./*.sh
+          bash ./script.sh

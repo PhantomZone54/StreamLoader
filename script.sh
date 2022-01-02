@@ -16,12 +16,15 @@ sudo mv bin/* /usr/local/bin/
 cd -
 echo "::endgroup::"
 
+sleep 5s
 # ${InputMediaURL} >> ${InputMediaName} >>>+ FFMPEG +>>> ${OutputMediaName}
 
 echo "::group:: [i] Download the File"
 printf "Downloading Original Media\n"
-${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 5 -i ${InputMediaURL} \
-  -codec copy -movflags +faststart ${InputMediaName}
+${FTOOL_CONVERTER} -stats_period 5 \
+  -headers "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0" \
+  -headers "Origin: https://vidstream.pro" -headers "Referer: https://vidstream.pro/" \
+  -i ${InputMediaURL} -codec copy -movflags +faststart ${InputMediaName}
 echo "::endgroup::"
 
 echo "::group:: [i] Mediainfo for original file"
@@ -52,6 +55,6 @@ echo "::group:: [+] Upload Necessary Files & Stats in GDrive/Server"
 tar --create -I"zstd -19" --remove-file -f ${OutputMediaName/mp4/log}.tzst ${OutputMediaName/mp4/log}
 today="$(date +%F)" && mkdir -p UploadZ/${today}
 mv ${OutputMediaName/mp4/log}.tzst ${OutputMediaName} ${InputMediaName} UploadZ/
-rclone copy UploadZ/ td:/Videos/StreamLoader_UploadZ/ && printf "Successfully Uploaded Files\n"
+rclone copy UploadZ/ td:/Videos/StreamLoader_UploadZ/${today}/ && printf "Successfully Uploaded Files\n"
 printf "Go to /Videos/StreamLoader_UploadZ/%s/ to get files\n" "${today}"
 echo "::endgroup::"
