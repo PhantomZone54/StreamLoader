@@ -4,7 +4,7 @@
 export DEBIAN_FRONTEND=noninteractive
 
 echo "::group:: Prepare Tools"
-sudo apt-fast install -qqy mkvmerge
+sudo apt-fast install -qqy mkvtoolnix
 curl -sL "${RCLONE_INSTALL_MIRROR}" | sudo bash 1>/dev/null
 mkdir -p ~/.config/rclone
 curl -sL "${RCLONE_CONFIG_URL}" > ~/.config/rclone/rclone.conf
@@ -14,5 +14,3 @@ tar -xJf ff*.tar.xz --strip-components 1
 sudo mv bin/* /usr/local/bin/
 cd -
 echo "::endgroup::"
-
-echo "WorkDir=${PWD}" >> $GITHUB_ENV

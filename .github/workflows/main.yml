@@ -11,6 +11,10 @@ on:
         description: "Name of the Anime w/ space"
         required: true
         default: ""
+      Episode:
+        description: "Episode Number, %02d"
+        required: true
+        default: "01"
       InputRes:
         description: "Resolution of Input Playlist"
         required: true
@@ -36,8 +40,10 @@ env:
   LocationOnIndex: "td:/StreamLoaderZ"
   InputMediaURL: ${{ github.event.inputs.InputMediaURL }}
   AnimeName: ${{ github.event.inputs.AnimeName }}
+  Episode: ${{ github.event.inputs.Episode }}
   InputRes: ${{ github.event.inputs.InputRes }}
   OutputRes: ${{ github.event.inputs.OutputRes }}
+  FrameRate: ${{ github.event.inputs.FrameRate }}
   AudioType: ${{ github.event.inputs.AudioType }}
   SpeedProf: ${{ github.event.inputs.SpeedProf }}
   RCLONE_CONFIG_URL: ${{ secrets.RCLONE_CONFIG_URL }}
@@ -50,6 +56,9 @@ jobs:
   transload:
     runs-on: ubuntu-latest
 
+    outputs:
+      audlang: ${{ steps.set-params.outputs.audlang }}
+      matrix: ${{ steps.set-params.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
       - name: Setup Tools
@@ -58,16 +67,22 @@ jobs:
       - name: "Anime Transload Job - ${{env.AnimeName}}"
         run: |
           bash ./transload.sh
-      - id: set-aud
+      - name: Prepare Matrix
+        id: set-params
         run: |
           echo "::set-output name=audlang::${AudLang}"
-          echo ${{ steps.set-aud.outputs.audlang }}
-      - id: set-matrix
-        run: |
+          echo ${{ steps.set-params.outputs.audlang }}
+          export input_matrix=$(for i in $(seq -w 01 ${Chunks}); do
+            printf "\"%s\"," "${i}"
+          done)
+          export matrix=[${input_matrix%,*}]
           echo "::set-output name=matrix::${matrix}"
-          echo ${{ steps.set-matrix.outputs.matrix }}
+          echo ${{ steps.set-params.outputs.matrix }}
 
   encode:
+    env:
+      partnum: ${{ matrix.partnum }}
+
     runs-on: ubuntu-latest
     needs: transload
 
@@ -75,20 +90,21 @@ jobs:
       fail-fast: true
       max-parallel: 4
       matrix:
-        partnum: ${{ needs.transload.outputs.matrix }}
+        partnum: ${{fromJson(needs.transload.outputs.matrix)}}
 
     steps:
       - uses: actions/checkout@v2
       - name: Setup Tools
         run: |
           bash ./fftool.sh
-      - name: "Anime R3NCOD3R Job - ${{env.AnimeName}}"
+      - name: "Anime R3NCOD3R Job - ${{env.AnimeName}} part_${{env.partnum}}"
         env:
           partnum: ${{ matrix.partnum }}
         run: |
           bash ./encode.sh
 
   merge:
+
     runs-on: ubuntu-latest
     needs: [transload, encode]
 
@@ -102,4 +118,3 @@ jobs:
           AudLang: ${{ needs.transload.outputs.audlang }}
         run: |
           bash ./merge.sh
-

@@ -1,16 +1,14 @@
 #!/bin/bash
 
-set -eo pipefail
+# + ${LocationOnIndex##*/}/${AnimeName}/SourceVideoChunks/${AnimeName}.Ep${Episode}.${InputRes}.${AudioType}.part_%02d.mkv
+# > ${LocationOnIndex##*/}/${AnimeName}/ArchiveChunks/${AnimeName}.Ep${Episode}.${OutputRes}.vp9.${AudioType}.part_%02d.mkv
 
-# + ${LocationOnIndex##*/}/${AnimeName}/SourceVideoChunks/${AnimeName}.${InputRes}.${AudioType}.part_%02d.mkv
-# > ${LocationOnIndex##*/}/${AnimeName}/ArchiveChunks/${AnimeName}.${OutputRes}.vp9.${AudioType}.part_%02d.mkv
-
-cd ${WorkDir}
-mkdir -p ${LocationOnIndex##*/}/{${AnimeName}/ArchiveChunks,VP9_Stats}
+cd -- "$GITHUB_WORKSPACE"
+mkdir -p ${LocationOnIndex##*/}/${AnimeName}/{ArchiveChunks,VP9_Stats}
 
 echo "::group:: [i] Download the File Chunk"
-export InputChunkFullName="${AnimeName}.${InputRes}.${AudioType}.part_${ChunkNum}.mkv}"
-rclone copy ${LocationOnIndex##*/}/${AnimeName}/SourceVideoChunks/${InputChunkFullName} . \
+export InputChunkFullName="${AnimeName}.Ep${Episode}.${InputRes}.${AudioType}.part_${partnum}.mkv"
+rclone copy ${LocationOnIndex}/${AnimeName}/SourceVideoChunks/${InputChunkFullName} . \
   && printf "Downloaded %s\n" "${InputChunkFullName}"
 export R3ncod3dChunkName=$(echo ${InputChunkFullName} | sed 's|'"${InputRes}"'|'"${OutputRes}"'.vp9|;s|.mkv||')
 echo "::endgroup::"
@@ -56,6 +54,6 @@ echo "::endgroup::"
 echo "::group:: [+] Upload Necessary Files & Stats in GDrive/Server"
 tar --create -I"zstd -19" --remove-file -f ${LocationOnIndex##*/}/${AnimeName}/VP9_Stats/${R3ncod3dChunkName}.arc.log.tzst \
   ${LocationOnIndex##*/}/${AnimeName}/VP9_Stats/${R3ncod3dChunkName}.arc.log
-rclone copy ${LocationOnIndex##*/}/${AnimeName}/ ${LocationOnIndex##*/}/${AnimeName}/ \
+rclone copy ${LocationOnIndex##*/}/${AnimeName}/ ${LocationOnIndex}/${AnimeName}/ \
   && printf "Uploaded All R3NCOD3D Files+Stats\n"
 echo "::endgroup::"
