@@ -8,44 +8,30 @@ on:
         required: true
         default: ""
       AnimeName:
-        description: "Name of the Anime w/ space"
+        description: "Pretty Name of the Anime"
         required: true
         default: ""
       Episode:
         description: "Episode Number, %02d"
         required: true
         default: "01"
-      InputRes:
-        description: "Resolution of Input Playlist"
+      AudLang:
+        description: "Anime Lang, en/ja"
         required: true
-        default: "1080p"
-      OutputRes:
-        description: "Resolution of Output Video"
-        required: true
-        default: "576p"
-      FrameRate:
-        description: "Frame Rate, 24/25"
-        required: true
-        default: "24"
-      AudioType:
-        description: "Anime Category, EngSub/EngDub"
-        required: true
-        default: "EngSub"
+        default: "en"
       SpeedProf:
-        description: "r3ncod3r SpeedProfile, 0/1/2"
+        description: "r3ncod3r SpeedProfile, 1/2/3"
         required: true
-        default: "1"
+        default: "2"
 
 env:
-  LocationOnIndex: "td:/StreamLoaderZ"
+  LocationOnIndex: "td:/9animeStreamZ"
   InputMediaURL: ${{ github.event.inputs.InputMediaURL }}
   AnimeName: ${{ github.event.inputs.AnimeName }}
   Episode: ${{ github.event.inputs.Episode }}
-  InputRes: ${{ github.event.inputs.InputRes }}
-  OutputRes: ${{ github.event.inputs.OutputRes }}
-  FrameRate: ${{ github.event.inputs.FrameRate }}
-  AudioType: ${{ github.event.inputs.AudioType }}
+  AudLang: ${{ github.event.inputs.AudLang }}
   SpeedProf: ${{ github.event.inputs.SpeedProf }}
+  QScale: "32"
   RCLONE_CONFIG_URL: ${{ secrets.RCLONE_CONFIG_URL }}
   RCLONE_INSTALL_MIRROR: ${{ secrets.RCLONE_INSTALL_MIRROR }}
   FTOOL_ARC_URL: ${{ secrets.FTOOL_ARC_URL }}
@@ -57,21 +43,26 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      audlang: ${{ steps.set-params.outputs.audlang }}
+      ChunkDir: ${{ steps.set-params.outputs.ChunkDir }}
+      ChunkEncDir: ${{ steps.set-params.outputs.ChunkEncDir }}
+      AudioType: ${{ steps.set-params.outputs.AudioType }}
+      FrameRate: ${{ steps.set-params.outputs.FrameRate }}
       matrix: ${{ steps.set-params.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
       - name: Setup Tools
         run: |
           bash ./fftool.sh
-      - name: "Anime Transload Job - ${{env.AnimeName}}"
+      - name: "Anime Transload Job - ${{env.AnimeName}} - Episode ${{env.Episode}}"
         run: |
-          bash ./transload.sh
+          bash ./transload-n-chunk.sh
       - name: Prepare Matrix
         id: set-params
         run: |
-          echo "::set-output name=audlang::${AudLang}"
-          echo ${{ steps.set-params.outputs.audlang }}
+          echo "::set-output name=ChunkDir::${ChunkDir}"
+          echo "::set-output name=ChunkEncDir::${ChunkEncDir}"
+          echo "::set-output name=AudioType::${AudioType}"
+          echo "::set-output name=FrameRate::${FrameRate}"
           export input_matrix=$(for i in $(seq -w 01 ${Chunks}); do
             printf "\"%s\"," "${i}"
           done)
@@ -79,42 +70,48 @@ jobs:
           echo "::set-output name=matrix::${matrix}"
           echo ${{ steps.set-params.outputs.matrix }}
 
-  encode:
-    env:
-      partnum: ${{ matrix.partnum }}
+  av1cod3r:
 
     runs-on: ubuntu-latest
     needs: transload
 
     strategy:
       fail-fast: true
-      max-parallel: 4
+      max-parallel: 8
       matrix:
-        partnum: ${{fromJson(needs.transload.outputs.matrix)}}
+        ChunkNum: ${{fromJson(needs.transload.outputs.matrix)}}
+
+    env:
+      ChunkNum: ${{ matrix.ChunkNum }}
 
     steps:
       - uses: actions/checkout@v2
       - name: Setup Tools
         run: |
           bash ./fftool.sh
-      - name: "Anime R3NCOD3R Job - ${{env.AnimeName}} part_${{env.partnum}}"
+      - name: "Anime R3NCOD3R Job - ${{env.AnimeName}} Ep_${{env.Episode}} part_${{env.ChunkNum}}"
         env:
-          partnum: ${{ matrix.partnum }}
+          ChunkDir: ${{ needs.transload.outputs.ChunkDir }}
+          ChunkEncDir: ${{ needs.transload.outputs.ChunkEncDir }}
+          AudioType: ${{ needs.transload.outputs.AudioType }}
+          FrameRate: ${{ needs.transload.outputs.FrameRate }}
         run: |
-          bash ./encode.sh
+          bash ./av1-encoder.sh
 
-  merge:
+  av1merger:
 
     runs-on: ubuntu-latest
-    needs: [transload, encode]
+    needs: [transload, av1cod3r]
 
     steps:
       - uses: actions/checkout@v2
       - name: Setup Tools
         run: |
           bash ./fftool.sh
-      - name: "Anime Merger Job - ${{env.AnimeName}}"
+      - name: "Anime Merger Job - ${{env.AnimeName}} - Episode ${{env.Episode}}"
         env:
-          AudLang: ${{ needs.transload.outputs.audlang }}
+          ChunkDir: ${{ needs.transload.outputs.ChunkDir }}
+          ChunkEncDir: ${{ needs.transload.outputs.ChunkEncDir }}
+          AudioType: ${{ needs.transload.outputs.AudioType }}
         run: |
-          bash ./merge.sh
+          bash ./av1-merger.sh
