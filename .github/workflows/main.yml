@@ -52,7 +52,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup Tools
         run: |
-          bash ./fftool.sh
+          bash ./EncToolsChunkManager.sh
+          bash ./EncToolsDLoader.sh
+          bash ./EncToolsR3ncod3r.sh
+      - name: Upload EncTools as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ftool
+          path: /usr/local/bin/ff*
       - name: "Anime Transload Job - ${{env.AnimeName}} - Episode ${{env.Episode}}"
         run: |
           bash ./transload-n-chunk.sh
@@ -86,9 +93,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Tools
+      - name: Download EncTools from Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ftool
+          path: /usr/local/bin/
+      - name: EncTool Preparation
         run: |
-          bash ./fftool.sh
+          bash ./EncToolsDLoader.sh
+          sudo chmod a+x /usr/local/bin/ff*
       - name: "Anime R3NCOD3R Job - ${{env.AnimeName}} Ep_${{env.Episode}} part_${{env.ChunkNum}}"
         env:
           ChunkDir: ${{ needs.transload.outputs.ChunkDir }}
@@ -105,9 +118,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Tools
+      - name: Download EncTools from Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ftool
+          path: /usr/local/bin/
+      - name: EncTool Preparation
         run: |
-          bash ./fftool.sh
+          bash ./EncToolsChunkManager.sh
+          bash ./EncToolsDLoader.sh
+          sudo chmod a+x /usr/local/bin/ff*
       - name: "Anime Merger Job - ${{env.AnimeName}} - Episode ${{env.Episode}}"
         env:
           ChunkDir: ${{ needs.transload.outputs.ChunkDir }}

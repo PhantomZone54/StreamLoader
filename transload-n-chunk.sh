@@ -2,25 +2,37 @@
 
 set -eo pipefail
 
+echo "::group:: [i] Prepare YT-DLP"
+sudo apt-fast install -qqy mpv &>/dev/null
+python3 -m pip install mutagen pycryptodome &>/dev/null
+python3 -m pip install --no-deps -U yt-dlp
+echo "::endgroup::"
+
 export ChunkDir=$(openssl rand -hex 8)
 echo "ChunkDir=${ChunkDir}" >> $GITHUB_ENV
 export ChunkEncDir=$(openssl rand -hex 12)
 echo "ChunkEncDir=${ChunkEncDir}" >> $GITHUB_ENV
 
-mkdir -p ${AnimeName}/${ChunkDir}/
-
-echo "::group:: [i] Download the File Stream"
 [[ ${AudLang} == "en" ]] && export AudioType="EngDub"
 [[ ${AudLang} == "ja" ]] && export AudioType="EngSub"
 echo "AudioType=${AudioType}" >> $GITHUB_ENV
-printf "Downloading Original Media and Separating Audio/Video\n"
-${FTOOL_CONVERTER} -loglevel error -stats -stats_period 10 -y \
-  -headers "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0" \
-  -headers "Origin: https://vidstream.pro" -headers "Referer: https://vidstream.pro/" \
-  -i ${InputMediaURL} -map_metadata -1 \
+
+mkdir -p ${AnimeName}/${ChunkDir}/
+
+echo "::group:: [i] Download the Original File Stream"
+yt-dlp --concurrent-fragments 16 --add-header 'Origin':'https://vidstream.pro' --add-header 'Referer':'https://vidstream.pro/' \
+  --add-header 'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0' \
+  --output MEDIA.mp4 -- ${InputMediaURL}
+printf "\n\n" && mediainfo MEDIA.mp4
+echo "::endgroup::"
+
+echo "::group:: [i] Separating Audio+Video\n"
+${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 10 -y -i MEDIA.mp4 -map_metadata -1 \
   -map 0:V -c:v copy -avoid_negative_ts 1 -movflags +faststart primary_video.mp4 \
   -map 0:a -c:a copy -avoid_negative_ts 1 -movflags +faststart primary_audio.mp4
 echo "::endgroup::"
+
+rm MEDIA.mp4
 
 echo "::group:: [i] Convert Audio"
 ${FTOOL_CONVERTER} -loglevel error -stats -stats_period 5 -y -i primary_audio.mp4 \
