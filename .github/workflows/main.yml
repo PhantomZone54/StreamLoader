@@ -7,22 +7,34 @@ on:
         description: "Stream m3u8 Playlist URL"
         required: true
         default: ""
+        type: string
       AnimeName:
         description: "Pretty Name of the Anime"
         required: true
         default: ""
+        type: string
       Episode:
         description: "Episode Number, %02d"
         required: true
-        default: "01"
+        default: ""
+        type: number
       AudLang:
         description: "Anime Lang, en/ja"
         required: true
         default: "en"
+        type: choice
+        options:
+        - ja
+        - en
       SpeedProf:
-        description: "r3ncod3r SpeedProfile, 1/2/3"
+        description: "AV1 SpeedProfile"
         required: true
         default: "2"
+        type: choice
+        options:
+        - "1"
+        - "2"
+        - "3"
 
 env:
   LocationOnIndex: "td:/9animeStreamZ"
@@ -84,7 +96,7 @@ jobs:
 
     strategy:
       fail-fast: true
-      max-parallel: 8
+      max-parallel: 6
       matrix:
         ChunkNum: ${{fromJson(needs.transload.outputs.matrix)}}
 
