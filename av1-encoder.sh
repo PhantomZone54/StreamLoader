@@ -22,9 +22,9 @@ ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 4 \
   -pass 1 -avoid_negative_ts 1 -f null /dev/null
 echo "::endgroup::"
 
-sleep 2s && echo && sleep 2s
+sleep 2s && date && sleep 2s
 
-echo "::group:: [i] Archival r3ncode - Pass 1 of 2"
+echo "::group:: [i] Archival r3ncode - Pass 2 of 2"
 ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 20 \
   -i ${InputChunkFullName} -map_metadata -1 -map_chapters -1 -map 0:V -c:v libaom-av1 \
   -vf ${ScaleFlags} -g $((FrameRate * 4)) -keyint_min ${FrameRate} \
@@ -36,9 +36,9 @@ ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 20 \
 sed -i 's|\r|\n|g' "${R3ncod3dChunkName}.log"
 echo "::endgroup::"
 
+date
 rm ffmpeg2pass*.log
 sleep 2s
-date
 
 echo "::group:: [i] Mediainfo for r3ncod3d SubChunk"
 mediainfo ${ChunkEncDir}/${R3ncod3dChunkName}.webm
