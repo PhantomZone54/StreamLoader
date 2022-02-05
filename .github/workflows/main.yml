@@ -29,12 +29,11 @@ on:
       SpeedProf:
         description: "AV1 SpeedProfile"
         required: true
-        default: "2"
+        default: "1"
         type: choice
         options:
         - "1"
         - "2"
-        - "3"
 
 env:
   LocationOnIndex: "td:/9animeStreamZ"
