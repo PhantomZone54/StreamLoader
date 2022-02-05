@@ -146,3 +146,8 @@ jobs:
           AudioType: ${{ needs.transload.outputs.AudioType }}
         run: |
           bash ./av1-merger.sh
+      - uses: kolpav/purge-artifacts-action@v1
+        if: ${{ success() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          expire-in: 0
