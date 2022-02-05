@@ -23,7 +23,10 @@ echo "::group:: [i] Download the Original File Stream"
 yt-dlp --concurrent-fragments 16 --add-header 'Origin':'https://vidstream.pro' --add-header 'Referer':'https://vidstream.pro/' \
   --add-header 'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0' \
   --output MEDIA.mp4 -- ${InputMediaURL}
-printf "\n\n" && mediainfo MEDIA.mp4
+echo "::endgroup::"
+
+echo "::group:: [i] mediainfo for the Original File Stream"
+mediainfo MEDIA.mp4
 echo "::endgroup::"
 
 echo "::group:: [i] Separating Audio+Video\n"
@@ -50,8 +53,8 @@ elif [[ ${FrameRate} == "25.000" ]]; then
   export FrameRate="25"
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
-export ChunkDur="60" # 1 minute
-export ChunkFramecount="$((FrameRate * ChunkDur))" # 24*60=1440
+export ChunkDur="80" # 1 minute 20 seconds
+export ChunkFramecount="$((FrameRate * ChunkDur))"
 export Partitions=$(( TotalFrames / ChunkFramecount ))
 printf "[!] The Source Has \"%s\" Frames\n" "${TotalFrames}"
 printf "Getting Positional Information of I-frames ...\n\n"
