@@ -51,6 +51,8 @@ if [[ ${FrameRate} == "23.976" || ${FrameRate} == "24.000" ]]; then
   export FrameRate="24"
 elif [[ ${FrameRate} == "25.000" ]]; then
   export FrameRate="25"
+elif [[ ${FrameRate} == "29.970" || ${FrameRate} == "30.000" ]]; then
+  export FrameRate="30"
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
 export ChunkDur="80" # 1 minute 20 seconds
