@@ -18,7 +18,7 @@ ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 4 \
   -vf ${ScaleFlags} -g $((FrameRate * 4)) -keyint_min ${FrameRate} \
   -usage good -cpu-used 2 -crf ${QScale} -b:v 0 -lag-in-frames 48 -threads 4 \
   -tile-columns 1 -tile-rows 0 -frame-parallel false -row-mt true \
-  -aq-mode 1 -aom-params ${AomParams} -qmin $((QScale/3)) -qmax $((QScale + QScale/3 + 2))
+  -aq-mode 1 -aom-params ${AomParams} -qmin $((QScale/3)) -qmax $((QScale + QScale/3 + 2)) \
   -pass 1 -avoid_negative_ts 1 -f null /dev/null
 echo "::endgroup::"
 
@@ -30,7 +30,7 @@ ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 20 \
   -vf ${ScaleFlags} -g $((FrameRate * 4)) -keyint_min ${FrameRate} \
   -usage good -cpu-used ${SpeedProf} -crf ${QScale} -b:v 0 -lag-in-frames 48 -threads 4 \
   -tile-columns 1 -tile-rows 0 -frame-parallel false -row-mt true \
-  -aq-mode 1 -aom-params ${AomParams} -qmin $((QScale/3)) -qmax $((QScale + QScale/3 + 2))
+  -aq-mode 1 -aom-params ${AomParams} -qmin $((QScale/3)) -qmax $((QScale + QScale/3 + 2)) \
   -pass 2 -auto-alt-ref 1 -avoid_negative_ts 1 -f webm -dash 1 \
   ${ChunkEncDir}/${R3ncod3dChunkName}.webm 2>&1 | tee ${R3ncod3dChunkName}.log
 sed -i 's|\r|\n|g' "${R3ncod3dChunkName}.log"
