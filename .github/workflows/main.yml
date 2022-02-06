@@ -29,7 +29,7 @@ on:
       SpeedProf:
         description: "AV1 SpeedProfile"
         required: true
-        default: "1"
+        default: "2"
         type: choice
         options:
         - "1"

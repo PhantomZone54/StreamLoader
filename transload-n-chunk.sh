@@ -20,7 +20,7 @@ echo "AudioType=${AudioType}" >> $GITHUB_ENV
 mkdir -p ${AnimeName}/${ChunkDir}/
 
 echo "::group:: [i] Download the Original File Stream"
-yt-dlp --concurrent-fragments 16 --add-header 'Origin':'https://vidstream.pro' --add-header 'Referer':'https://vidstream.pro/' \
+yt-dlp --quiet --concurrent-fragments 16 --add-header 'Origin':'https://vidstreamz.online' --add-header 'Referer':'https://vidstreamz.online/' \
   --add-header 'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0' \
   --output MEDIA.mp4 -- ${InputMediaURL}
 echo "::endgroup::"
@@ -35,7 +35,8 @@ ${FTOOL_CONVERTER} -loglevel warning -stats -stats_period 10 -y -i MEDIA.mp4 -ma
   -map 0:a -c:a copy -avoid_negative_ts 1 -movflags +faststart primary_audio.mp4
 echo "::endgroup::"
 
-rm MEDIA.mp4
+export OrigStreamRes=$(mediainfo --Output='Video;%Height%' MEDIA.mp4)
+mv MEDIA.mp4 ${AnimeName}/${AnimeName}.Ep${Episode}.${AudioType}.${OrigStreamRes}p.mp4
 
 echo "::group:: [i] Convert Audio"
 ${FTOOL_CONVERTER} -loglevel error -stats -stats_period 5 -y -i primary_audio.mp4 \
@@ -55,7 +56,7 @@ elif [[ ${FrameRate} == "29.970" || ${FrameRate} == "30.000" ]]; then
   export FrameRate="30"
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
-export ChunkDur="80" # 1 minute 20 seconds
+export ChunkDur="60" # 1 minute
 export ChunkFramecount="$((FrameRate * ChunkDur))"
 export Partitions=$(( TotalFrames / ChunkFramecount ))
 printf "[!] The Source Has \"%s\" Frames\n" "${TotalFrames}"
@@ -86,5 +87,5 @@ export Chunks=$(ls ${AnimeName}/${ChunkDir}/${AnimeName}.Ep${Episode}.${AudioTyp
 echo "Chunks=${Chunks}" >> $GITHUB_ENV
 
 echo "::group:: [i] Upload All Chunks + Audio"
-rclone copy ${AnimeName}/ ${LocationOnIndex}/${AnimeName}/ && printf "Audio + Chunks Uploading Done\n"
+rclone copy ${AnimeName}/ ${LocationOnIndex}/${AnimeName}/ && printf "Original Stream + Audio + Chunks Uploading Done\n"
 echo "::endgroup::"
