@@ -59,7 +59,7 @@ elif [[ ${FrameRate} == "29.970" || ${FrameRate} == "30.000" ]]; then
   export FrameRate="30"
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
-export ChunkDur="12" # 12 Seconds
+export ChunkDur="16" # 16 Seconds
 export ChunkFramecount="$((FrameRate * ChunkDur))"
 export Partitions=$(( TotalFrames / ChunkFramecount ))
 printf "[!] The Source Has \"%s\" Frames\n" "${TotalFrames}"

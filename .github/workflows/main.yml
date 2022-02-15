@@ -96,7 +96,7 @@ jobs:
 
     strategy:
       fail-fast: true
-      max-parallel: 10
+      max-parallel: 12
       matrix:
         ChunkNum: ${{fromJson(needs.transload.outputs.matrix)}}
 
