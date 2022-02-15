@@ -38,7 +38,7 @@ echo "::endgroup::"
 
 date
 rm ffmpeg2pass*.log
-sleep 2s
+sleep 5s
 
 echo "::group:: [i] Mediainfo for r3ncod3d SubChunk"
 mediainfo ${ChunkEncDir}/${R3ncod3dChunkName}.webm

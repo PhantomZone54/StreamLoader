@@ -82,9 +82,10 @@ jobs:
           echo "::set-output name=AudioType::${AudioType}"
           echo "::set-output name=FrameRate::${FrameRate}"
           export input_matrix=$(for i in $(seq -w 01 ${Chunks}); do
-            printf "\"%s\"," "${i}"
+            printf "\"%s\"," "${i#0}"
           done)
           export matrix=[${input_matrix%,*}]
+          echo ${matrix}
           echo "::set-output name=matrix::${matrix}"
           echo ${{ steps.set-params.outputs.matrix }}
 
@@ -95,7 +96,7 @@ jobs:
 
     strategy:
       fail-fast: true
-      max-parallel: 6
+      max-parallel: 8
       matrix:
         ChunkNum: ${{fromJson(needs.transload.outputs.matrix)}}
 

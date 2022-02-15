@@ -8,9 +8,9 @@ python3 -m pip install mutagen pycryptodome &>/dev/null
 python3 -m pip install --no-deps -U yt-dlp
 echo "::endgroup::"
 
-export ChunkDir=$(openssl rand -hex 8)
+export ChunkDir=orig.$(openssl rand -hex 6)
 echo "ChunkDir=${ChunkDir}" >> $GITHUB_ENV
-export ChunkEncDir=$(openssl rand -hex 12)
+export ChunkEncDir=enc.$(openssl rand -hex 8)
 echo "ChunkEncDir=${ChunkEncDir}" >> $GITHUB_ENV
 
 [[ ${AudLang} == "en" ]] && export AudioType="EngDub"
@@ -20,7 +20,8 @@ echo "AudioType=${AudioType}" >> $GITHUB_ENV
 mkdir -p ${AnimeName}/${ChunkDir}/
 
 echo "::group:: [i] Download the Original File Stream"
-yt-dlp --quiet --concurrent-fragments 16 --add-header 'Origin':'https://vidstreamz.online' --add-header 'Referer':'https://vidstreamz.online/' \
+yt-dlp --quiet --concurrent-fragments 16 --add-header 'Origin':'https://vidstreamz.online' \
+  --add-header 'Referer':'https://vidstreamz.online/' \
   --add-header 'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0' \
   --output MEDIA.mp4 -- ${InputMediaURL}
 echo "::endgroup::"
@@ -45,6 +46,8 @@ ${FTOOL_CONVERTER} -loglevel error -stats -stats_period 5 -y -i primary_audio.mp
   ${AnimeName}/${AnimeName}.Ep${Episode}.audio-${AudLang}.mp4
 echo "::endgroup::"
 
+sleep 5s
+
 echo "::group:: [i] Split the Video into Parts"
 export TotalFrames="$(mediainfo --Output='Video;%FrameCount%' primary_video.mp4)"
 FrameRate="$(mediainfo --Output='Video;%FrameRate%' primary_video.mp4)"
@@ -56,7 +59,7 @@ elif [[ ${FrameRate} == "29.970" || ${FrameRate} == "30.000" ]]; then
   export FrameRate="30"
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
-export ChunkDur="60" # 1 minute
+export ChunkDur="12" # 12 Seconds
 export ChunkFramecount="$((FrameRate * ChunkDur))"
 export Partitions=$(( TotalFrames / ChunkFramecount ))
 printf "[!] The Source Has \"%s\" Frames\n" "${TotalFrames}"
@@ -64,6 +67,7 @@ printf "Getting Positional Information of I-frames ...\n\n"
 ${FTOOL_PROBER} -loglevel warning -threads 8 -select_streams v -show_frames \
   -show_entries frame=pict_type -of csv primary_video.mp4 \
   | grep -n I | cut -d ':' -f 1 > Iframe_indices.txt
+sleep 5s
 BOUNDARY_GOP=""
 for x in $(seq 1 ${Partitions}); do
   for i in $(< Iframe_indices.txt); do
@@ -78,13 +82,15 @@ if [[ $(( TotalFrames - ${BOUNDARY_GOP##*,} )) -le $(( ChunkFramecount / 4 )) ]]
 fi
 printf "[i] GOP Boundaries in Source Video:\n%s\n\n" "${BOUNDARY_GOP}"
 printf "Splitting Source Video into Multiple Chunks\n\n"
-mkvmerge --quiet --output ${AnimeName}/${ChunkDir}/${AnimeName}.Ep${Episode}.${AudioType}.part_%02d.mkv \
+mkvmerge --quiet --output ${AnimeName}/${ChunkDir}/${AnimeName}.Ep${Episode}.${AudioType}.part_%03d.mkv \
   -A -S -B -M -T --no-global-tags --no-chapters --split frames:"${BOUNDARY_GOP}" primary_video.mp4
 ls -lAog ${AnimeName}/${ChunkDir}
 echo "::endgroup::"
 
 export Chunks=$(ls ${AnimeName}/${ChunkDir}/${AnimeName}.Ep${Episode}.${AudioType}.part_*.mkv | wc -l)
 echo "Chunks=${Chunks}" >> $GITHUB_ENV
+
+sleep 5s
 
 echo "::group:: [i] Upload All Chunks + Audio"
 rclone copy ${AnimeName}/ ${LocationOnIndex}/${AnimeName}/ && printf "Original Stream + Audio + Chunks Uploading Done\n"
