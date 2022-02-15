@@ -81,8 +81,8 @@ jobs:
           echo "::set-output name=ChunkEncDir::${ChunkEncDir}"
           echo "::set-output name=AudioType::${AudioType}"
           echo "::set-output name=FrameRate::${FrameRate}"
-          export input_matrix=$(for i in $(seq -w 01 ${Chunks}); do
-            printf "\"%s\"," "${i#0}"
+          export input_matrix=$(for i in $(seq -w 001 ${Chunks}); do
+            printf "\"%s\"," "${i}"
           done)
           export matrix=[${input_matrix%,*}]
           echo ${matrix}
@@ -96,7 +96,7 @@ jobs:
 
     strategy:
       fail-fast: true
-      max-parallel: 8
+      max-parallel: 10
       matrix:
         ChunkNum: ${{fromJson(needs.transload.outputs.matrix)}}
 
@@ -122,6 +122,13 @@ jobs:
           FrameRate: ${{ needs.transload.outputs.FrameRate }}
         run: |
           bash ./av1-encoder.sh
+      - name: "Cleanup"
+        env:
+          ChunkDir: ${{ needs.transload.outputs.ChunkDir }}
+        if: ${{ failure() }}
+        run: |
+          sleep 2s
+          rclone purge ${LocationOnIndex}/${AnimeName}/${ChunkDir}/ --retries=0 2>/dev/null
 
   av1merger:
 
