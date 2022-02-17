@@ -51,7 +51,7 @@ sleep 5s
 echo "::group:: [i] Split the Video into Parts"
 export TotalFrames="$(mediainfo --Output='Video;%FrameCount%' primary_video.mp4)"
 FrameRate="$(mediainfo --Output='Video;%FrameRate%' primary_video.mp4)"
-if [[ ${FrameRate} == "23.976" || ${FrameRate} == "23.746" || ${FrameRate} == "24.000" ]]; then
+if [[ ${FrameRate} == "23."[789]* || ${FrameRate} == "24.000" ]]; then
   export FrameRate="24"
 elif [[ ${FrameRate} == "25.000" ]]; then
   export FrameRate="25"
@@ -62,7 +62,7 @@ else
   exit 1
 fi
 echo "FrameRate=${FrameRate}" >> $GITHUB_ENV
-export ChunkDur="16" # 16 Seconds
+export ChunkDur="20" # 20 Seconds
 export ChunkFramecount="$((FrameRate * ChunkDur))"
 export Partitions=$(( TotalFrames / ChunkFramecount ))
 printf "[!] The Source Has \"%s\" Frames\n" "${TotalFrames}"
